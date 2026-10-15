@@ -110,3 +110,21 @@ test('operations can review fictional applicants, filter trips, and resolve a de
   await page.getByRole('button', { name: 'Resolve demo report', exact: true }).click();
   await expect(page.getByText('Resolved in this demo session')).toBeVisible();
 });
+
+test('liquid background renders, flows, pauses, and remains behind the interface', async ({ page }) => {
+  await page.goto('http://localhost:8081');
+  await expect(page.locator('.intro-film')).toHaveCount(0);
+  const canvas = page.getByTestId('liquid-canvas');
+  await expect(canvas).toHaveAttribute('data-renderer', 'webgl');
+  const sample = () => page.screenshot({ clip: {x:0,y:0,width:24,height:24} });
+  const first = await sample();
+  await expect.poll(async () => Buffer.compare(first, await sample())).not.toBe(0);
+  await page.getByRole('button', { name: 'Toggle motion' }).click();
+  await expect(page.getByRole('button', { name: 'Toggle motion' })).toHaveAttribute('aria-pressed','false');
+  await expect(canvas).toHaveAttribute('data-renderer', 'webgl');
+  const still = await sample();
+  const again = await sample();
+  expect(Buffer.compare(still, again)).toBe(0);
+  await page.getByRole('button', { name: /Find a ride/ }).click();
+  await expect(page.getByText('Your people. Your ride.')).toBeVisible();
+});

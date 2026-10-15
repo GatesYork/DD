@@ -4,7 +4,7 @@ A college ride marketplace: students request rides, drivers quote their own fare
 
 ## Latest web demo
 
-The web experience now has bright school themes, animated campus art and route lines, pointer parallax, button and panel transitions, reduced-motion support, and opt-in browser sounds. Choose a campus from the header. School logos fall back to monograms when unavailable; Georgia College uses a provisional GC badge.
+The web experience now has full-screen flowing marble backgrounds in school colors, translucent dark panels, animated campus art and route lines, pointer response, button and panel transitions, reduced-motion support, and opt-in browser sounds. Georgia College uses blue and emerald green throughout the background. Choose a campus from the header. School logos fall back to monograms when unavailable; Georgia College uses a provisional GC badge.
 
 Pricing is now whole-dollar **per person**, with a **15% commission deducted from the driver**. Route prices and distances are preset demo examples. Try browsing drivers for a two-minute preferred-driver window, or request a ride for automatic simulated matching. The driver view includes an explicit online switch and private whole-dollar minimum earnings.
 

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { DEMO_DRIVERS, INITIAL_STATE, demoReducer, money, priceBreakdown, type DemoState, type DemoAction } from '@dd/domain';
 import { dollarsToCents, validationMessage } from '@dd/validation';
+import { LiquidBackground } from './LiquidBackground';
 import { CampusMap } from './CampusMap';
 import { schools, type School } from './schools';
 import { playFeedback } from './sound';
 import './cinematic.css';
+import './liquid-theme.css';
 
 function SchoolLogo({ school }: { school: School }) {
   const [failed, setFailed] = useState(false);
@@ -47,7 +49,7 @@ export default function CinematicRide() {
   const distances = ['1.2', '2.8', '4.6'];
   const durations = ['6', '11', '17'];
   const eligible = DEMO_DRIVERS.filter(d => d.seats >= passengers && (d.id !== 'avery' || online));
-  const style = { '--primary': school.color, '--accent': school.accent, '--wash': school.wash } as CSSProperties;
+  const style = { '--primary': school.color, '--accent': school.accent, '--wash': school.wash, '--liquid-deep': school.liquid[0], '--liquid-blue': school.liquid[1], '--liquid-green': school.liquid[2], '--liquid-glow': school.liquid[3] } as CSSProperties;
 
   useEffect(() => {
     const q = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -117,7 +119,7 @@ export default function CinematicRide() {
     scene.current?.style.setProperty('--mx', `${(e.clientX / innerWidth - .5) * 18}px`);
     scene.current?.style.setProperty('--my', `${(e.clientY / innerHeight - .5) * 14}px`);
   }} onPointerLeave={() => { scene.current?.style.setProperty('--mx', '0px'); scene.current?.style.setProperty('--my', '0px'); }}>
-    <div className="ambient" aria-hidden="true"><div className="orb orb-one"/><div className="orb orb-two"/><div className="orbit"/><span className="giant-monogram">{school.short}</span></div>
+    <LiquidBackground palette={school.liquid} reduced={reduced}/>
     {welcome && !reduced && <div className="intro-film" aria-hidden="true"><span>dd<span className="intro-dot">.</span></span><p>GOOD NIGHTS. GREAT COMPANY.</p></div>}
     <header className="topbar"><a className="wordmark" href="#" aria-label="Designated Driver home" onClick={e => e.preventDefault()}>dd<span>.</span><small>campus moves.</small></a>
       <div className="school-picker"><button className="school-trigger" aria-expanded={schoolMenu} onClick={() => { setSchoolMenu(!schoolMenu); feedback(); }}><SchoolLogo school={school}/><span>{school.name}<small>{school.town}, Georgia</small></span><span>⌄</span></button>

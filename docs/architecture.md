@@ -54,3 +54,9 @@ The first-accept and priority-window experiences are local simulations. The exis
 The SVG campus map is a stylized illustration, not cartographic or live data. Location markers mount only for confirmed/arriving/in-progress simulated trips and unmount on completion/cancellation. Real mapping, trip-scoped subscriptions, location permission handling, stale-location indicators, and server-side sharing termination remain required.
 
 School logo URLs for UGA/GT/KSU use ESPN's public image CDN, with monogram fallbacks on failure. These URLs were blocked by the development environment's network policy, so successful external image delivery has not been validated here. Georgia College uses an explicitly provisional GC monogram until an official asset is supplied. Campus landmark art is original SVG illustration. No university affiliation is implied. Optional Google Fonts fall back to system fonts if unavailable.
+
+## Full-screen liquid school themes
+
+The web demo now uses an original WebGL fragment shader to blend each school's palette into moving marble-like veins across the whole viewport. Georgia College uses navy/blue/emerald/mint. Translucent dark panels keep booking controls readable above the color field; the map is also dark themed. School selection smoothly updates shader uniforms. This replaces the previous white backdrop and floating pastel circles.
+
+The renderer caps backing resolution and runs at approximately 30 fps, suspends drawing in hidden tabs, and renders a static frame for reduced-motion or Motion off. Pointer movement gently displaces the texture. WebGL failures/context loss fall back to a CSS school-color background. Shader/program/buffer and event handlers are released on cleanup. Browser tests exercise active rendering, changing background pixels, frozen motion, and interaction through the non-interactive background layer. Physical-device GPU performance still needs validation.
