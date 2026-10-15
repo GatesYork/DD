@@ -2,6 +2,14 @@
 
 A college ride marketplace: students request rides, drivers quote their own fares, and riders choose an offer. The initial market is Georgia College in Milledgeville.
 
+## Latest web demo
+
+The web experience now has bright school themes, animated campus art and route lines, pointer parallax, button and panel transitions, reduced-motion support, and opt-in browser sounds. Choose a campus from the header. School logos fall back to monograms when unavailable; Georgia College uses a provisional GC badge.
+
+Pricing is now whole-dollar **per person**, with a **15% commission deducted from the driver**. Route prices and distances are preset demo examples. Try browsing drivers for a two-minute preferred-driver window, or request a ride for automatic simulated matching. The driver view includes an explicit online switch and private whole-dollar minimum earnings.
+
+The illustrated map shows simulated person markers only between matching and the end of a trip. It is not real GPS. Browser sound does not know the phone silent-switch setting; native audio and motion parity remain future work.
+
 ## What works now
 
 - Expo mobile application with a responsive web build and a clearly labeled, in-memory demo: request a ride, compare offers, set a driver fare, book, simulate arrival and completion, cancel, rate, and favorite a driver.
@@ -36,7 +44,7 @@ npm run test:e2e:cloud
 
 The cloud browser command uses a bundled Linux Chromium installed through npm, avoiding a separate browser-download domain. On other systems, use `npx playwright install chromium` and `npm run test:e2e`. Playwright starts both apps and checks the complete simulated ride, pricing, passenger capacity, favorites, cancellation, and admin actions.
 
-Database tests use PGlite (PostgreSQL in WebAssembly), execute the actual migration, and emulate only the Supabase `auth.users`/`auth.uid()` boundary. They verify authorization and database constraints, not hosted Auth, Realtime, PostgREST, or independent concurrent database connections. The SQL request locks and unique active-trip indexes provide the production concurrency controls; a multi-connection integration test is still required before live bookings.
+Database tests use PGlite (PostgreSQL in WebAssembly), execute the actual migrations, and emulate only the Supabase `auth.users`/`auth.uid()` boundary. They verify authorization and database constraints, not hosted Auth, Realtime, PostgREST, or independent concurrent database connections. The SQL request locks and unique active-trip indexes provide the production concurrency controls; a multi-connection integration test is still required before live bookings.
 
 ## Local Supabase (next integration milestone)
 

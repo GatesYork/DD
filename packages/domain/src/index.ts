@@ -2,7 +2,7 @@ import { fareSchema, rideRequestSchema, type RideRequestInput } from '@dd/valida
 
 export type TripStatus = 'confirmed' | 'arriving' | 'in_progress' | 'completed' | 'cancelled';
 export type Driver = { id: string; name: string; initials: string; school: string; car: string; seats: number; rating: string; minutes: number };
-export type Offer = { id: string; driver: Driver; fareCents: number; feeCents: number; totalCents: number; expiresAt: number };
+export type Offer = { id: string; driver: Driver; fareCents: number; feeCents: number; totalCents: number; perPersonCents: number; driverEarningsCents: number; expiresAt: number };
 export type DemoTrip = { id: string; request: RideRequestInput; offer: Offer; status: TripStatus };
 export type DemoState = { request: RideRequestInput | null; offers: Offer[]; trip: DemoTrip | null; favorites: string[]; rating: number | null };
 export const INITIAL_STATE: DemoState = { request: null, offers: [], trip: null, favorites: [], rating: null };
@@ -11,15 +11,18 @@ export const DEMO_DRIVERS: Driver[] = [
   { id: 'jordan', name: 'Jordan T.', initials: 'JT', school: 'Georgia College', car: 'White Honda CR-V', seats: 4, rating: '4.8', minutes: 6 },
   { id: 'sam', name: 'Sam R.', initials: 'SR', school: 'Georgia College', car: 'Silver Kia Sorento', seats: 6, rating: '4.9', minutes: 8 },
 ];
-export function priceBreakdown(fareCents: number, feeBasisPoints = 1500) {
+export function priceBreakdown(fareCents: number, feeBasisPoints = 1500, passengers = 1) {
   fareSchema.parse(fareCents);
   if (!Number.isInteger(feeBasisPoints) || feeBasisPoints < 0 || feeBasisPoints > 10000) throw new Error('Invalid fee rate.');
-  const feeCents = Math.round(fareCents * feeBasisPoints / 10000);
-  return { fareCents, feeCents, totalCents: fareCents + feeCents };
+  if (fareCents % 100 !== 0) throw new Error('Use whole-dollar prices per person.');
+  if (!Number.isInteger(passengers) || passengers < 1 || passengers > 6) throw new Error('Choose 1 to 6 passengers.');
+  const totalCents = fareCents * passengers;
+  const feeCents = Math.round(totalCents * feeBasisPoints / 10000);
+  return { perPersonCents: fareCents, fareCents: totalCents, feeCents, totalCents, driverEarningsCents: totalCents - feeCents };
 }
 export const money = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 export type DemoAction =
-  | { type: 'request'; input: RideRequestInput; now: number }
+  | { type: 'request'; input: RideRequestInput; now: number; fareCents?: number }
   | { type: 'offer'; driver: Driver; fareCents: number; now: number }
   | { type: 'accept'; offerId: string; now: number }
   | { type: 'advance' }
@@ -35,14 +38,14 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       if (state.request || state.trip) throw new Error('Finish or reset the current ride first.');
       const request = rideRequestSchema.parse(action.input);
       const offers = DEMO_DRIVERS.filter(d => d.seats >= request.passengers).map((driver, i) => ({
-        id: driver.id, driver, ...priceBreakdown(600 + i * 150), expiresAt: action.now + 300000,
+        id: driver.id, driver, ...priceBreakdown(action.fareCents ?? 500, 1500, request.passengers), expiresAt: action.now + 300000,
       }));
       return { ...state, request, offers, rating: null };
     }
     case 'offer': {
       if (!state.request || state.trip) throw new Error('This request is no longer open.');
       if (action.driver.seats < state.request.passengers) throw new Error('Not enough passenger seats.');
-      const offer = { id: action.driver.id, driver: action.driver, ...priceBreakdown(action.fareCents), expiresAt: action.now + 300000 };
+      const offer = { id: action.driver.id, driver: action.driver, ...priceBreakdown(action.fareCents, 1500, state.request.passengers), expiresAt: action.now + 300000 };
       return { ...state, offers: [...state.offers.filter(o => o.id !== offer.id), offer] };
     }
     case 'accept': {

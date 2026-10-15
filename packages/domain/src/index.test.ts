@@ -5,8 +5,10 @@ import { dollarsToCents } from '@dd/validation';
 const input = { pickup: 'Front Campus', destination: 'Downtown', passengers: 2 };
 describe('pilot ride workflow', () => {
   it('calculates a complete, rounded booking price', () => {
-    expect(priceBreakdown(750)).toEqual({ fareCents: 750, feeCents: 113, totalCents: 863 });
-    expect(dollarsToCents('7.50')).toBe(750);
+    expect(priceBreakdown(500, 1500, 3)).toEqual({ perPersonCents: 500, fareCents: 1500, feeCents: 225, totalCents: 1500, driverEarningsCents: 1275 });
+    expect(() => priceBreakdown(450)).toThrow('whole-dollar');
+    expect(dollarsToCents('7')).toBe(700);
+    expect(() => dollarsToCents('4.5')).toThrow('whole dollars');
     expect(() => dollarsToCents('7.555')).toThrow();
     expect(() => dollarsToCents('-1')).toThrow();
   });
@@ -14,7 +16,7 @@ describe('pilot ride workflow', () => {
     let state = demoReducer(INITIAL_STATE, { type: 'request', input, now: 0 });
     state = demoReducer(state, { type: 'offer', driver: DEMO_DRIVERS[0], fareCents: 1000, now: 1 });
     state = demoReducer(state, { type: 'accept', offerId: 'avery', now: 2 });
-    expect(state.trip?.offer.totalCents).toBe(1150);
+    expect(state.trip?.offer.totalCents).toBe(2000);
     expect(() => demoReducer(state, { type: 'offer', driver: DEMO_DRIVERS[0], fareCents: 2000, now: 3 })).toThrow('no longer open');
     for (let i = 0; i < 3; i++) state = demoReducer(state, { type: 'advance' });
     expect(state.trip?.status).toBe('completed');

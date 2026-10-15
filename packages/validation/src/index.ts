@@ -17,7 +17,6 @@ export function validationMessage(error: unknown): string {
 }
 
 export function dollarsToCents(value: string): number {
-  if (!/^\d{1,3}(\.\d{1,2})?$/.test(value.trim())) throw new Error('Enter a price with up to two decimal places.');
-  const [whole, fraction = ''] = value.trim().split('.');
-  return fareSchema.parse(Number(whole) * 100 + Number(fraction.padEnd(2, '0')));
+  if (!/^\d{1,3}$/.test(value.trim())) throw new Error('Use whole dollars, such as 4 or 5.');
+  return fareSchema.parse(Number(value.trim()) * 100);
 }

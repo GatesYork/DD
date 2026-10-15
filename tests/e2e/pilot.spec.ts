@@ -1,50 +1,100 @@
 import { test, expect } from '@playwright/test';
 
-test('rider and driver complete a simulated booking with a custom fare', async ({ page }) => {
+test('school themes persist and a preferred driver trip uses commission with private tracking', async ({ page }) => {
   await page.goto('http://localhost:8081');
-  await expect(page.getByRole('button', { name: 'Find a ride', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /Georgia College/ }).click();
+  await page.getByRole('button', { name: /University of Georgia/ }).click();
+  await expect(page.getByRole('heading', { name: /Bulldog/ })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: /Bulldog/ })).toBeVisible();
+  await expect(page.locator('.intro-film')).toHaveCount(0);
   await page.screenshot({ path: 'test-results/mobile-desktop.png', fullPage: true });
-  await page.getByRole('button', { name: 'Find a ride', exact: true }).click();
-  await expect(page.getByText('Meet your ride.')).toBeVisible();
+  await expect(page.getByTestId('driver-marker')).toHaveCount(0);
+  await page.getByRole('button', { name: '2 passengers', exact: true }).click();
+  await page.getByRole('button', { name: /Or find a familiar face/ }).click();
+  await page.getByRole('button', { name: 'Request Jordan T.', exact: true }).click();
+  await page.getByRole('button', { name: /Find a ride/ }).click();
+  await expect(page.getByRole('timer')).toContainText('1:');
+  await page.getByRole('button', { name: /Simulate driver acceptance/ }).click();
+  await expect(page.getByText('Your people. Your ride.')).toBeVisible();
+  await expect(page.getByTestId('driver-marker')).toBeVisible();
+  await expect(page.getByTestId('rider-marker')).toBeVisible();
+  await expect(page.getByText('$8.00', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Drive mode', exact: true }).click();
-  await page.getByLabel('Your fare in dollars', { exact: true }).fill('10.00');
-  await page.getByRole('button', { name: 'Send my offer', exact: true }).click();
-  await expect(page.getByText('Offer sent. Switch to Ride to choose it.')).toBeVisible();
-  await page.getByRole('button', { name: 'Ride mode', exact: true }).click();
-  await page.getByRole('button', { name: 'Choose Avery M.', exact: true }).click();
-  await expect(page.getByText('Your ride is confirmed')).toBeVisible();
-  await expect(page.getByText('$11.50').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Simulate driver arrival', exact: true }).click();
-  await page.getByRole('button', { name: 'Simulate starting ride', exact: true }).click();
-  await page.getByRole('button', { name: 'Simulate completing ride', exact: true }).click();
-  await expect(page.getByText('You’ve arrived. Nice ride.')).toBeVisible();
+  await expect(page.getByText('−$1.20')).toBeVisible();
+  await expect(page.getByText('$6.80')).toBeVisible();
+  await page.getByRole('button', { name: /Simulate driver arrival/ }).click();
+  await page.getByRole('button', { name: /Simulate starting ride/ }).click();
+  await page.getByRole('button', { name: /Simulate completing ride/ }).click();
+  await expect(page.getByText('Home looks good on you.')).toBeVisible();
+  await expect(page.getByTestId('driver-marker')).toHaveCount(0);
+  await expect(page.getByTestId('rider-marker')).toHaveCount(0);
   await page.getByRole('button', { name: 'Rate 5 stars', exact: true }).click();
   await expect(page.getByText('Thanks! Your demo rating is 5/5.')).toBeVisible();
-  await page.getByRole('button', { name: 'Save favorite driver', exact: true }).click();
-  await page.getByRole('button', { name: 'Request another ride', exact: true }).click();
-  await page.getByRole('button', { name: 'Find a ride', exact: true }).click();
-  await page.getByRole('checkbox').click();
-  await expect(page.getByRole('button', { name: 'Choose Avery M.', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Choose Jordan T.', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: /Save favorite driver/ }).click();
+  await expect(page.getByRole('button', { name: /Favorite driver saved/ })).toBeVisible();
 });
-test('mobile viewport validates pickup and only offers a vehicle with enough seats', async ({ page }) => {
+
+test('phone layout validates locations, matches capacity, and ends tracking on cancellation', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('http://localhost:8081');
-  await expect(page.getByRole('button', { name: 'Find a ride', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Find a ride/ })).toBeVisible();
+  await expect(page.locator('.intro-film')).toHaveCount(0);
   await page.screenshot({ path: 'test-results/mobile-phone.png', fullPage: true });
   await page.getByLabel('Pickup', { exact: true }).fill('');
-  await page.getByRole('button', { name: 'Find a ride', exact: true }).click();
-  await expect(page.getByRole('alert')).toBeVisible();
+  await page.getByRole('button', { name: /Find a ride/ }).click();
+  await expect(page.getByRole('alert')).toHaveText('Enter a pickup location.');
   await page.getByLabel('Pickup', { exact: true }).fill('Front Campus');
   await page.getByRole('button', { name: '6 passengers', exact: true }).click();
-  await page.getByRole('button', { name: 'Find a ride', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Choose Sam R.', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Choose Avery M.', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Choose Sam R.', exact: true }).click();
+  await page.getByRole('button', { name: /Find a ride/ }).click();
+  await expect(page.getByText('Your people. Your ride.')).toBeVisible();
+  await expect(page.getByText('Sam R.', { exact: true })).toBeVisible();
+  await expect(page.getByText('$24.00', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel ride', exact: true }).click();
-  await expect(page.getByText('Ride cancelled', { exact: true })).toBeVisible();
+  await expect(page.getByText('Another time, then.')).toBeVisible();
+  await expect(page.getByTestId('driver-marker')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('.cinema').evaluate(el => el.scrollTop = 0);
+  await page.mouse.move(200, 600);
+  await page.mouse.wheel(0, 500);
+  await expect.poll(() => page.locator('.cinema').evaluate(el => el.scrollTop)).toBeGreaterThan(0);
 });
+
+test('driver must be online, use whole-dollar minimums, and accept only affordable requests', async ({ page }) => {
+  await page.goto('http://localhost:8081');
+  await page.getByRole('button', { name: 'Drive mode', exact: true }).click();
+  await page.getByRole('button', { name: 'Start driving', exact: true }).click();
+  await page.getByRole('button', { name: 'Ride mode', exact: true }).click();
+  await page.getByRole('button', { name: /Or find a familiar face/ }).click();
+  await page.getByRole('button', { name: 'Request Avery M.', exact: true }).click();
+  await page.getByRole('button', { name: /Find a ride/ }).click();
+  await page.getByRole('button', { name: 'Drive mode', exact: true }).click();
+  await page.getByLabel('Minimum earnings in whole dollars').fill('4.5');
+  await page.getByRole('button', { name: /Accept this ride/ }).click();
+  await expect(page.getByRole('alert')).toHaveText('Use whole dollars, such as 4 or 5.');
+  await page.getByLabel('Minimum earnings in whole dollars').fill('10');
+  await page.getByRole('button', { name: /Accept this ride/ }).click();
+  await expect(page.getByRole('alert')).toHaveText('This trip is below your private minimum earnings.');
+  await page.getByLabel('Minimum earnings in whole dollars').fill('3');
+  await page.getByRole('button', { name: 'Stop driving', exact: true }).click();
+  await page.getByRole('button', { name: /Accept this ride/ }).click();
+  await expect(page.getByRole('alert')).toHaveText('Start driving before accepting a request.');
+  await page.getByRole('button', { name: 'Start driving', exact: true }).click();
+  await page.getByRole('button', { name: /Accept this ride/ }).click();
+  await expect(page.getByText('Your people. Your ride.')).toBeVisible();
+  await expect(page.getByText('$3.40', { exact: true })).toBeVisible();
+});
+
+test('reduced motion is respected and browser sound requires opt-in', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('http://localhost:8081');
+  await expect(page.getByRole('button', { name: 'Toggle motion' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('button', { name: 'Turn sound on' })).toHaveAttribute('aria-pressed', 'false');
+  await page.getByRole('button', { name: 'Turn sound on' }).click();
+  await expect(page.getByRole('button', { name: 'Turn sound off' })).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.locator('.map-route').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
+});
+
 test('operations can review fictional applicants, filter trips, and resolve a demo report', async ({ page }) => {
   await page.goto('http://localhost:3000');
   await expect(page.getByRole('heading', { name: 'A good night starts here.' })).toBeVisible();

@@ -23,7 +23,7 @@ async function request(user = rider) {
   return row.id;
 }
 async function offer(id: string) {
-  const [row] = await asUser<{ id: string }>(driver, 'select public.submit_ride_offer($1,$2,$3) id', [id, vehicle, 750]);
+  const [row] = await asUser<{ id: string }>(driver, 'select public.submit_ride_offer($1,$2,$3) id', [id, vehicle, 800]);
   return row.id;
 }
 async function accept(id: string, user = rider) { return asUser<{ id: string }>(user, 'select public.accept_ride_offer($1) id', [id]); }
@@ -34,6 +34,7 @@ beforeAll(async () => {
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema public,auth to authenticated,anon; grant execute on function auth.uid() to authenticated,anon;`);
   await db.exec(readFileSync('supabase/migrations/202610150001_foundation.sql', 'utf8'));
+  await db.exec(readFileSync('supabase/migrations/202610150002_per_person_commission.sql', 'utf8'));
   await db.exec(readFileSync('supabase/seed.sql', 'utf8'));
 });
 beforeEach(async () => {
@@ -54,8 +55,22 @@ describe('database booking and access boundaries', () => {
   it('books a verified student and snapshots server-calculated prices pending payment', async () => {
     const id = await request(); const oid = await offer(id); const [booked] = await accept(oid);
     const rows = await asUser<{ status: string; total_cents: number; fee_cents: number }>(rider, 'select status,total_cents,fee_cents from public.trips where id=$1', [booked.id]);
-    expect(rows).toEqual([{ status: 'awaiting_payment', total_cents: 863, fee_cents: 113 }]);
+    expect(rows).toEqual([{ status: 'awaiting_payment', total_cents: 1600, fee_cents: 240 }]);
     expect((await asUser(driver, 'select * from public.ride_requests')).length).toBe(1);
+  });
+  it('preserves the original totals for a legacy additive quote', async () => {
+    const id = await request();
+    const inserted = await db.query<{id:string}>(
+      'insert into public.ride_offers(request_id,driver_id,vehicle_id,fare_cents,fee_cents) values($1,$2,$3,500,75) returning id',
+      [id, driver, vehicle],
+    );
+    const [booked] = await accept(inserted.rows[0].id);
+    const rows = await asUser(rider, 'select total_cents,driver_earnings_cents,pricing_model from public.trips where id=$1', [booked.id]);
+    expect(rows).toEqual([{total_cents:575,driver_earnings_cents:500,pricing_model:'legacy_additive'}]);
+  });
+  it('rejects fractional per-person fares on the server', async () => {
+    const id = await request();
+    await expect(asUser(driver, 'select public.submit_ride_offer($1,$2,$3)', [id, vehicle, 450])).rejects.toThrow('whole-dollar');
   });
   it('hides exact pickup and all other students’ bookings', async () => {
     const id = await request();

@@ -21,3 +21,17 @@ The simulated trip bypasses payment deliberately and visibly. The real database 
 ## Later scope
 
 Authentication and account recovery; provider-backed verification; driver onboarding; real routing and background location; transactional payments, refunds, and payouts; staff authentication; reporting and support workflows; notifications and messaging; then additional campus markets. Scheduled rides, pooled bookings, events, subscriptions, and sponsorships follow pilot evidence.
+
+## Updated decisions — cinematic demo
+
+These decisions supersede the earlier additive-fee and total-quote assumptions above:
+
+- Bright, animated school themes: Georgia College, UGA, Georgia Tech, and Kennesaw State. Theme selection persists in the browser. School/market switching is disabled during a request. These are preview campuses, not operating service areas.
+- Whole-dollar per-person rates with no group discount. Example: $5 × 3 people = $15. The 15% platform commission is deducted from that $15, leaving $12.75 before any other applicable deductions. No added rider platform fee.
+- Driver pricing preferences are private minimum trip earnings; drivers must explicitly go online. Demo peers are fictional online profiles. Driver-supplied fractional amounts are rejected. Distance-dependent demo prices use three preset illustrative routes ($4/$5/$6 per person), not real routing or addresses.
+- The first eligible simulated driver accepts a public request. A selected active profile has a 120-second priority window, with early release available. A preferred-driver acceptance button is explicitly a simulation. Driver profile visibility is not a public price competition.
+- Booking students may bring non-student guests. Separate verified-student guest booking remains a future flow.
+- Request, pickup, and drop-off location markers exist only during a matched, active simulated trip; they are removed on cancellation/completion. There is no GPS collection, location permission request, or off-trip tracking.
+- Browser sound is opt-in and off by default each visit. Browsers cannot reliably detect the hardware silent switch. Native ringer-aware audio is not implemented. Motion respects system reduced-motion preferences and an in-app toggle.
+
+The previous native screen remains a simpler prototype with updated pricing. The cinematic interface targets the deployed Expo web demo. Native animation parity and real realtime location require a later implementation.

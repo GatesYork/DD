@@ -19,7 +19,7 @@ export default function RideExperience() {
   const [pickup, setPickup] = useState('Georgia College · Front Campus');
   const [destination, setDestination] = useState('Downtown Milledgeville');
   const [passengers, setPassengers] = useState(1);
-  const [fare, setFare] = useState('7.00');
+  const [fare, setFare] = useState('7');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -33,7 +33,7 @@ export default function RideExperience() {
   const actionLabels = { confirmed: 'Simulate driver arrival', arriving: 'Simulate starting ride', in_progress: 'Simulate completing ride' };
   const offers = state.offers.filter(o => !favoritesOnly || state.favorites.includes(o.driver.id));
   let quote: ReturnType<typeof priceBreakdown> | null = null;
-  try { quote = priceBreakdown(dollarsToCents(fare)); } catch { /* Validation is shown when the offer is submitted. */ }
+  try { quote = priceBreakdown(dollarsToCents(fare), 1500, state.request?.passengers ?? 1); } catch { /* Validation is shown when the offer is submitted. */ }
 
   return <SafeAreaView style={s.safe}><ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
     <View style={s.nav}>
@@ -62,7 +62,7 @@ export default function RideExperience() {
           <Text style={s.eyebrow}>{trip.id} · SIMULATED TRIP</Text>
           <Text role="heading" style={s.cardTitle}>{stageLabels[trip.status]}</Text>
           <View style={s.person}><View style={s.avatar}><Text style={s.initials}>{trip.offer.driver.initials}</Text></View><View style={{ flex: 1 }}><Text style={s.name}>{trip.offer.driver.name}</Text><Text style={s.small}>{trip.offer.driver.car}</Text></View><Text style={s.price}>{money(trip.offer.totalCents)}</Text></View>
-          <View style={s.receipt}><View style={s.between}><Text style={s.body}>Driver fare</Text><Text style={s.body}>{money(trip.offer.fareCents)}</Text></View><View style={s.between}><Text style={s.body}>Platform fee</Text><Text style={s.body}>{money(trip.offer.feeCents)}</Text></View><View style={s.between}><Text style={s.name}>Total · {trip.request.passengers} passenger{trip.request.passengers > 1 ? 's' : ''}</Text><Text style={s.name}>{money(trip.offer.totalCents)}</Text></View></View>
+          <View style={s.receipt}><View style={s.between}><Text style={s.body}>Driver fare</Text><Text style={s.body}>{money(trip.offer.fareCents)}</Text></View><View style={s.between}><Text style={s.body}>Driver commission · 15%</Text><Text style={s.body}>−{money(trip.offer.feeCents)}</Text></View><View style={s.between}><Text style={s.name}>Total · {trip.request.passengers} passenger{trip.request.passengers > 1 ? 's' : ''}</Text><Text style={s.name}>{money(trip.offer.totalCents)}</Text></View></View>
           <Text style={s.helper}>Demo checkout only. No card is collected and no money moves.</Text>
           {!finished && <><Button label={actionLabels[trip.status as keyof typeof actionLabels]} onPress={() => act({ type: 'advance' })} />{trip.status !== 'in_progress' && <Button secondary label="Cancel ride" onPress={() => act({ type: 'cancel' })} />}</>}
           {trip.status === 'completed' && <View style={s.rating}><Text style={s.name}>How was the ride?</Text><View style={s.ratingRow}>{[1, 2, 3, 4, 5].map(score => <Pressable key={score} accessibilityRole="button" accessibilityLabel={`Rate ${score} stars`} onPress={() => act({ type: 'rate', score })}><Text style={[s.star, { color: score <= (state.rating || 0) ? c.green : '#b7c3b3' }]}>★</Text></Pressable>)}</View>{state.rating && <Text style={s.small}>Thanks! Your demo rating is {state.rating}/5.</Text>}</View>}
@@ -70,7 +70,7 @@ export default function RideExperience() {
           {finished && <Button label="Request another ride" onPress={() => { act({ type: 'reset' }); setMode('rider'); setFavoritesOnly(false); }} />}
         </> : mode === 'driver' ? <>
           <Text style={s.eyebrow}>DRIVER VIEW · AVERY M.</Text><Text role="heading" style={s.cardTitle}>Make a little.\nHelp a lot.</Text><Text style={s.body}>This demo profile is approved for a vehicle with 4 passenger seats.</Text>
-          {state.request ? <><View style={s.receipt}><Text style={s.name}>A student needs a ride</Text><Text style={s.body}>{state.request.pickup} → {state.request.destination}</Text><Text style={s.small}>{state.request.passengers} passenger{state.request.passengers > 1 ? 's' : ''} · Georgia College</Text></View><Field label="Your fare in dollars" value={fare} onChange={setFare} placeholder="7.00" /><Text style={s.helper}>{quote ? `Rider pays ${money(quote.totalCents)}, including a ${money(quote.feeCents)} platform fee. Driver fare: ${money(quote.fareCents)}, before any applicable deductions.` : 'Enter a fare between $1 and $200.'}</Text><Button label="Send my offer" onPress={() => { try { const next = demoReducer(state, { type: 'offer', driver: DEMO_DRIVERS[0], fareCents: dollarsToCents(fare), now: Date.now() }); setState(next); setError(''); setNotice('Offer sent. Switch to Ride to choose it.'); } catch (e) { setError(e instanceof Error ? e.message : 'Check your fare.'); } }} /></> : <View style={s.empty}><Text style={s.name}>Ready when your campus is.</Text><Text style={s.body}>Switch to Ride and create a request to try setting your own price.</Text><Button label="Try a rider request" onPress={() => setMode('rider')} /></View>}
+          {state.request ? <><View style={s.receipt}><Text style={s.name}>A student needs a ride</Text><Text style={s.body}>{state.request.pickup} → {state.request.destination}</Text><Text style={s.small}>{state.request.passengers} passenger{state.request.passengers > 1 ? 's' : ''} · Georgia College</Text></View><Field label="Per-person fare in whole dollars" value={fare} onChange={setFare} placeholder="7" /><Text style={s.helper}>{quote ? `Rider pays ${money(quote.totalCents)}. Your earnings: ${money(quote.driverEarningsCents)} after the 15% commission, before other deductions.` : 'Enter a fare between $1 and $200.'}</Text><Button label="Send my offer" onPress={() => { try { const next = demoReducer(state, { type: 'offer', driver: DEMO_DRIVERS[0], fareCents: dollarsToCents(fare), now: Date.now() }); setState(next); setError(''); setNotice('Offer sent. Switch to Ride to choose it.'); } catch (e) { setError(e instanceof Error ? e.message : 'Check your fare.'); } }} /></> : <View style={s.empty}><Text style={s.name}>Ready when your campus is.</Text><Text style={s.body}>Switch to Ride and create a request to try setting your own price.</Text><Button label="Try a rider request" onPress={() => setMode('rider')} /></View>}
         </> : !state.request ? <>
           <Text style={s.eyebrow}>LET’S GET YOU THERE</Text><Text role="heading" style={s.cardTitle}>Where are we headed?</Text><Text style={s.body}>A night out. A game day. A ride back.</Text>
           <View style={s.form}><Field label="Pickup" value={pickup} onChange={setPickup} /><Field label="Destination" value={destination} onChange={setDestination} />
@@ -83,7 +83,7 @@ export default function RideExperience() {
           {offers.length === 0 && <View style={s.empty}><Text style={s.body}>No favorite drivers match this request. Turn off the filter to see available offers.</Text></View>}
           {offers.map(offer => <View key={offer.id} style={s.offer}>
             <View style={s.person}><View style={s.avatar}><Text style={s.initials}>{offer.driver.initials}</Text></View><View style={{ flex: 1 }}><Text style={s.name}>{offer.driver.name}</Text><Text style={s.small}>★ {offer.driver.rating} · {offer.driver.minutes} min · Demo</Text></View><Text style={s.price}>{money(offer.totalCents)}</Text></View>
-            <Text style={s.small}>{offer.driver.car} · {offer.driver.seats} seats</Text><Text style={s.helper}>{money(offer.fareCents)} fare + {money(offer.feeCents)} platform fee</Text>
+            <Text style={s.small}>{offer.driver.car} · {offer.driver.seats} seats</Text><Text style={s.helper}>{money(offer.fareCents)} total · 15% deducted from driver earnings</Text>
             <Button label={`Choose ${offer.driver.name}`} onPress={() => act({ type: 'accept', offerId: offer.id, now: Date.now() })} />
           </View>)}<Button secondary label="Edit ride request" onPress={() => act({ type: 'cancel' })} />
         </>}
