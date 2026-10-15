@@ -1,0 +1,26 @@
+{
+  "name": "@dd/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start --web --port 8081",
+    "build": "expo export --platform web",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dd/domain": "0.1.0",
+    "@dd/validation": "0.1.0",
+    "expo": "57.0.29",
+    "expo-router": "~57.0.27",
+    "expo-constants": "~57.0.22",
+    "expo-linking": "~57.0.13",
+    "@expo/metro-runtime": "~57.0.17",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-web": "~0.21.0",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0"
+  }
+}

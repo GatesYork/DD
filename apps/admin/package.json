@@ -1,0 +1,17 @@
+{
+  "name": "@dd/admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0 --port 3000",
+    "build": "next build --webpack",
+    "start": "next start --hostname 0.0.0.0 --port 3000",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dd/domain": "0.1.0",
+    "next": "16.4.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  }
+}
