@@ -63,3 +63,33 @@ The migration, seed, and CLI configuration are in `supabase/`. With Docker and a
 - `docs/dependency-review.md`: unresolved upstream dependency advisories and release follow-up.
 
 Use the existing checkout in cloud tasks. Each task is already isolated; do not create a Git worktree unless explicitly requested.
+
+### Mapbox street maps (web)
+
+Set `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN` to a Mapbox **public** (`pk.`) token in
+Vercel's `designateddriver1` project for Production and Preview, using Config
+visibility. Redeploy after changing it: Expo embeds public environment variables
+at build time. For local development set the same variable in
+`apps/mobile/.env.local` (ignored). Never put secret Mapbox tokens in client code.
+If the public token has URL restrictions, allow the deployed origin and any
+preview origins used for testing.
+
+With a token, the campus map uses Mapbox GL JS and the real dark street map,
+centered on the selected school. Mapbox attribution remains visible. Missing
+tokens explicitly show the illustrated preview; invalid tokens and loading
+failures show an error with retry. Mapbox usage is billed/limited by the token
+owner's plan.
+
+“Use my location” requests a single browser location fix on click, shows its
+approximate accuracy, and centers the map. HTTPS (or localhost) and browser
+permission are required. It does not save coordinates to our database or send
+them to another user; centering the map requests map data from Mapbox. Clear,
+school changes, completed/cancelled rides, and unmount remove the location marker.
+It is not continuous driver tracking. Typed pickup/destination fields and fares
+still use demo data; geocoding, road directions, authentication and private
+participant-to-participant tracking are separate backend work.
+
+Run `npm run test:e2e:cloud -- --config playwright.mapbox.config.ts` for the
+Mapbox widget/location/error tests. These use a fake public token and intercepted
+API fixtures, not real Mapbox streets. Check live account/token access in the
+Vercel deployment. Run `npm run test:e2e:cloud` for the no-token demo suite.
