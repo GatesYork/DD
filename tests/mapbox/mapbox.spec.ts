@@ -51,9 +51,25 @@ test('shows an actionable map error and retries after an API failure', async ({ 
     ? route.fulfill({ status: 401, json: { message: 'Invalid token' } })
     : route.fulfill({ json: { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#142533' } }] } }));
   await page.goto('/');
-  await expect(page.getByRole('alert')).toContainText('Street maps could not load');
+  await expect(page.getByRole('alert')).toContainText('Mapbox rejected the token (401)');
   fail = false;
   await page.getByRole('button', { name: 'Retry map' }).click();
   await expect(page.getByRole('button', { name: 'Use my location', exact: true })).toBeEnabled({ timeout: 15000 });
   await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+for (const [status, message] of [[403, 'Mapbox denied map access (403)'], [429, 'Mapbox’s request limit was reached (429)']] as const) {
+  test(`explains HTTP ${status} without exposing the token`, async ({ page }) => {
+    await page.route('https://api.mapbox.com/styles/**', route => route.fulfill({ status, json: { message: 'Request failed' } }));
+    await page.goto('/');
+    await expect(page.getByRole('alert')).toContainText(message);
+    await expect(page.getByRole('alert')).not.toContainText('pk.test');
+    await expect(page.getByRole('button', { name: 'Retry map' })).toBeVisible();
+  });
+}
+
+test('explains a blocked network request', async ({ page }) => {
+  await page.route('https://api.mapbox.com/styles/**', route => route.abort('blockedbyclient'));
+  await page.goto('/');
+  await expect(page.getByRole('alert')).toContainText('The browser could not load Mapbox data');
 });

@@ -9,6 +9,17 @@ import './real-map.css';
 
 // Expo substitutes this public value when Vercel builds the web bundle.
 const token = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim();
+
+// Never render raw SDK errors: their messages can contain request URLs and tokens.
+function mapFailure(error: unknown): string {
+  const status = typeof error === 'object' && error !== null && 'status' in error ? Number(error.status) : 0;
+  if (status === 401) return 'Mapbox rejected the token (401). Copy the full public token into Vercel, save it, and redeploy.';
+  if (status === 403) return 'Mapbox denied map access (403). Check the token’s allowed website URLs and permissions, and your Mapbox account access.';
+  if (status === 429) return 'Mapbox’s request limit was reached (429). Check account usage and try again later.';
+  if (status >= 500) return 'Mapbox is having a service problem. Please try again shortly.';
+  if (status === 404) return 'Mapbox could not find the requested map resource (404). Please retry or report this error.';
+  return 'The browser could not load Mapbox data. Check your connection and whether a browser extension or network filter is blocking Mapbox, then retry.';
+}
 export function CampusMap({ school, status }: { school: School; status?: TripStatus }) {
   if (!token) return <div><p className="map-config-note" role="status">Map preview · Street maps need a Mapbox token in the deployment.</p><IllustratedCampusMap school={school} status={status}/></div>;
   return <StreetMap key={school.id} school={school} status={status}/>;
@@ -40,6 +51,7 @@ function StreetMap({ school, status }: { school: School; status?: TripStatus }) 
     let disposed = false;
     let instance: MapboxMap | null = null;
     let observer: ResizeObserver | null = null;
+    let failed = false;
     setReady(false); setError('');
     const timer = setTimeout(() => {
       if (!disposed) setError('The street map is taking too long to load. Check your connection and try again.');
@@ -59,15 +71,18 @@ function StreetMap({ school, status }: { school: School; status?: TripStatus }) 
         instance.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
         instance.on('load', () => {
           if (disposed || !instance) return;
-          clearTimeout(timer); setReady(true); setError('');
+          clearTimeout(timer); setReady(true);
+          if (!failed) setError('');
           const badge = document.createElement('div');
           badge.className = 'real-campus-pin';
           badge.textContent = school.short;
           badge.setAttribute('aria-label', `${school.name} campus area`);
           new mapboxgl.Marker({ element: badge }).setLngLat([...school.center]).addTo(instance);
         });
-        instance.on('error', () => {
-          if (!disposed) setError('Street maps could not load. Check the connection or Mapbox token settings, then retry.');
+        instance.on('error', event => {
+          if (disposed) return;
+          failed = true; clearTimeout(timer);
+          setError(mapFailure(event.error));
         });
         observer = new ResizeObserver(() => instance?.resize());
         observer.observe(container.current);
